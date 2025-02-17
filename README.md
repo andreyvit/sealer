@@ -26,14 +26,13 @@ Uses modern best practices for cryptography:
 
 * encapsulation uses XChaCha20-Poly1305 with a random 192-bit nonce;
 
-* encryption splits the file into chunks (16 KB by default) and uses deterministic nonces for these, marking the final chunk's nonce;
+* encryption splits the file into chunks (32 KB by default) and uses deterministic nonces for these, marking the final chunk's nonce to detect trimming;
 
 * nothing of the above is configurable.
 
-ChaCha20-Poly1305 has been chosen as a modern and standardized cipher, ensuring wide availability and interoperability. NaCl's XSalsa20-Poly1305 would be similar, but it's standardized so ChaCha20 is a better choice going forward.
-AES-256-GCM could also be used here, but ChaCha20 has fewer concerns about complicated attack scenarios.
+ChaCha20-Poly1305 has been chosen as a modern and standardized cipher, ensuring wide availability and interoperability. NaCl's XSalsa20-Poly1305 would be similar, but it's not a standard so ChaCha20 seems like a better choice going forward. AES-256-GCM could also be used here, but ChaCha20 has fewer concerns about complicated attack scenarios.
 
-Before encryption, sealer applies xstd compression, it both provides an excellent time/compression balance, and has an [accepted proposal for inclusion in Go stdlib](https://github.com/golang/go/issues/62513). Until that happens, we use [github.com/klauspost/compress/zstd](https://pkg.go.dev/github.com/klauspost/compress/zstd) which has zero dependencies.
+Before encryption, sealer applies zstd compression, it provides an excellent time/compression balance and has an [accepted proposal for inclusion in Go stdlib](https://github.com/golang/go/issues/62513). Until that happens, we use [github.com/klauspost/compress/zstd](https://pkg.go.dev/github.com/klauspost/compress/zstd) which is an excellent zero-dependency library.
 
 
 ## Usage
@@ -41,7 +40,7 @@ Before encryption, sealer applies xstd compression, it both provides an excellen
 
 ### Generating a key
 
-A key is just a `[16]byte` identifier and `[32]byte` secret key:
+A key is just a `[16]byte` identifier and a `[32]byte` secret key:
 
 ```go
 key := &sealer.Key{}
@@ -53,16 +52,16 @@ if err != nil {
 }
 ````
 
-16 bytes is enough to hold an integer (or two), a UUID, or a short name.
+16 bytes of Key ID is enough to hold an integer (or two), a UUID or a short name — the usage is up to you.
 
 
-### Sealing
+### Sealing (aka encrypting)
 
 Example:
 
 ```go
 // prefix is any []byte you want to prepend to the file, can be nil.
-w, err := sealer.Seal(&sealed, key, prefix, sealer.SealOptions{})
+w, err := sealer.Seal(outputWriter, key, prefix, sealer.SealOptions{})
 if err != nil {
 	panic(err)
 }
@@ -74,7 +73,7 @@ for range 100 {
 	}
 }
 
-// Very important to close the writer to write the final chunk.
+// Very important to close the writer to write out the final chunk.
 err = w.Close()
 if err != nil {
 	panic(err)
@@ -84,10 +83,12 @@ if err != nil {
 If you provide a prefix, `sealer.Seal` will write it to the beginning of the file.
 
 
-### Opening
+### Opening (aka decrypting)
+
+Example:
 
 ```go
-o, err := sealer.Prepare(&sealed, prefix)
+o, err := sealer.Prepare(inputReader, prefix)
 if err != nil {
 	panic(err)
 }
@@ -107,11 +108,11 @@ if err != nil {
 }
 ```
 
-Unlike sealer, opener will not read the prefix for you — it assumes you already had to read the file header to make sense of what it is. So if you want a prefix, read it yourself before calling `sealer.Prepare`:
+Unlike sealer, opener will not read the prefix for you — it assumes you've already read the file header to make sense of what it is. So if you want a prefix, read it yourself before calling `sealer.Prepare`:
 
 ```go
 prefix := make([]byte, prefixLen)
-_, err := io.ReadFull(&sealed, prefix)
+_, err := io.ReadFull(inputReader, prefix)
 if err != nil {
 	panic(err)
 }
