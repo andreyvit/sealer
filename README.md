@@ -18,6 +18,20 @@ Sealer is a bit like [filippo.io/age](https://pkg.go.dev/filippo.io/age), but si
 
 ## Usage
 
+Install:
+
+```sh
+go get github.com/andreyvit/sealer@latest
+```
+
+and then:
+
+```go
+import (
+	"github.com/andreyvit/sealer"
+)
+```
+
 
 ### Generating a key
 
