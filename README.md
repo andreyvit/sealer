@@ -16,25 +16,6 @@ Sealer is a bit like [filippo.io/age](https://pkg.go.dev/filippo.io/age), but si
 * single secret encryption key only (with a 32-byte user-definable KeyID so that you can look up the key in your system's keystore).
 
 
-## Encryption & Compression
-
-Uses modern best practices for cryptography:
-
-* ChaCha20-Poly1305 encryption;
-
-* ephemeral (i.e. per-file) encryption key that is encapsulated by the encryption key;
-
-* encapsulation uses XChaCha20-Poly1305 with a random 192-bit nonce;
-
-* encryption splits the file into chunks (32 KB by default) and uses deterministic nonces for these, marking the final chunk's nonce to detect trimming;
-
-* nothing of the above is configurable.
-
-ChaCha20-Poly1305 has been chosen as a modern and standardized cipher, ensuring wide availability and interoperability. NaCl's XSalsa20-Poly1305 would be similar, but it's not a standard so ChaCha20 seems like a better choice going forward. AES-256-GCM could also be used here, but ChaCha20 has fewer concerns about complicated attack scenarios.
-
-Before encryption, sealer applies zstd compression, it provides an excellent time/compression balance and has an [accepted proposal for inclusion in Go stdlib](https://github.com/golang/go/issues/62513). Until that happens, we use [github.com/klauspost/compress/zstd](https://pkg.go.dev/github.com/klauspost/compress/zstd) which is an excellent zero-dependency library.
-
-
 ## Usage
 
 
@@ -117,6 +98,25 @@ if err != nil {
 	panic(err)
 }
 ```
+
+
+## Encryption & Compression
+
+Uses modern best practices for cryptography:
+
+* ChaCha20-Poly1305 encryption;
+
+* ephemeral (i.e. per-file) encryption key that is encapsulated by the encryption key;
+
+* encapsulation uses XChaCha20-Poly1305 with a random 192-bit nonce;
+
+* encryption splits the file into chunks (32 KB by default) and uses deterministic nonces for these, marking the final chunk's nonce to detect trimming;
+
+* nothing of the above is configurable.
+
+ChaCha20-Poly1305 has been chosen as a modern and standardized cipher, ensuring wide availability and interoperability. NaCl's XSalsa20-Poly1305 would be similar, but it's not a standard so ChaCha20 seems like a better choice going forward. AES-256-GCM could also be used here, but ChaCha20 has fewer concerns about complicated attack scenarios.
+
+Before encryption, sealer applies zstd compression, it provides an excellent time/compression balance and has an [accepted proposal for inclusion in Go stdlib](https://github.com/golang/go/issues/62513). Until that happens, we use [github.com/klauspost/compress/zstd](https://pkg.go.dev/github.com/klauspost/compress/zstd) which is an excellent zero-dependency library.
 
 
 ## License
