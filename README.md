@@ -40,11 +40,11 @@ Before encryption, sealer applies zstd compression, it provides an excellent tim
 
 ### Generating a key
 
-A key is just a `[16]byte` identifier and a `[32]byte` secret key:
+A key is just a `[32]byte` user-defined identifier and a `[32]byte` secret key material:
 
 ```go
 key := &sealer.Key{}
-copy(key.ID[:], "WHATEVER_YA_WANT")
+copy(key.ID[:], "YA_CAN_PUT_WHATEVER_YA_WANT_HERE")
 
 _, err := io.ReadFull(cryptoRand.Reader, key.Key[:])
 if err != nil {
@@ -52,7 +52,7 @@ if err != nil {
 }
 ````
 
-16 bytes of Key ID is enough to hold an integer (or two), a UUID or a short name — the usage is up to you.
+32 bytes of Key ID is enough to hold an integer (or four), a UUID (or two), a string name, or SHA-256 hash of any data — the usage is up to you.
 
 
 ### Sealing (aka encrypting)

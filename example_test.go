@@ -16,7 +16,7 @@ func Example() {
 	copy(prefix, "MY_DATA_FORMAT_HEADER_GOES_HERE!")
 
 	key := &sealer.Key{}
-	copy(key.ID[:], "WHATEVER_YA_WANT")
+	copy(key.ID[:], "YA_CAN_PUT_WHATEVER_YA_WANT_HERE")
 	_, err := io.ReadFull(cryptoRand.Reader, key.Key[:])
 	if err != nil {
 		panic(err)
@@ -87,8 +87,8 @@ func Example() {
 		}
 	}
 
-	// Output: 20000 bytes input => 369 bytes sealed
+	// Output: 20000 bytes input => 389 bytes sealed
 	// Preparing to open:
 	// prefix = MY_DATA_FORMAT_HEADER_GOES_HERE!
-	// key ID = WHATEVER_YA_WANT
+	// key ID = YA_CAN_PUT_WHATEVER_YA_WANT_HERE
 }

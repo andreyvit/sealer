@@ -16,7 +16,7 @@ func TestSealer_simple(t *testing.T) {
 }
 
 func TestSealer_large(t *testing.T) {
-	chunkSizes := []uint32{1, 2, 3, 8, 32, 1000, 16 * 1024}
+	chunkSizes := []int{1, 2, 3, 8, 32, 1000, 16 * 1024}
 	multiples := []int{0, 1, 10, 128}
 	remainders := []int{-2, -1, 0, 1, 2}
 	writeSizes := []int{0, 1, 2, 8, 1024}
@@ -58,7 +58,7 @@ func TestSealer_large(t *testing.T) {
 	}
 }
 
-func run(t *testing.T, chunkSize uint32, multiple, remainder, writeSize int) {
+func run(t *testing.T, chunkSize, multiple, remainder, writeSize int) {
 	key := generateKey()
 
 	var originalPrefix [32]byte

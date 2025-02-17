@@ -17,7 +17,7 @@ import (
 // which key to provide to the Open method.
 func Prepare(in io.Reader, outerPrefix []byte) (*Openable, error) {
 	oplen := len(outerPrefix)
-	prefix := make([]byte, oplen+envelopeHeaderSize)
+	prefix := make([]byte, oplen+headerSize)
 	copy(prefix, outerPrefix)
 	header := prefix[oplen:]
 
@@ -25,13 +25,23 @@ func Prepare(in io.Reader, outerPrefix []byte) (*Openable, error) {
 		return nil, err
 	}
 
+	version := int(binary.LittleEndian.Uint32(header[offVersion : offVersion+4]))
+	chunkSize := int(binary.LittleEndian.Uint32(header[offChunkSize : offChunkSize+4]))
+
+	if version != 0 {
+		return nil, ErrUnsupportedVersion
+	}
+	if chunkSize == 0 || chunkSize > MaxChunkSize {
+		return nil, ErrChunkSizeTooLarge
+	}
+
 	opn := &Openable{
 		in:        in,
 		prefix:    prefix,
-		chunkSize: int(binary.LittleEndian.Uint32(header[0:4])),
+		chunkSize: chunkSize,
 	}
-	copy(opn.KeyID[:], header[4:4+IDSize])
-	copy(opn.encapsulated[:], header[4+IDSize:])
+	copy(opn.KeyID[:], header[offKeyID:offKeyID+IDSize])
+	copy(opn.encapsulated[:], header[offEncKey:headerSize])
 
 	return opn, nil
 }

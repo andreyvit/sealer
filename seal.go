@@ -15,6 +15,12 @@ func Seal(out io.Writer, key *Key, outerPrefix []byte, opt SealOptions) (*Writer
 	if opt.ChunkSize == 0 {
 		opt.ChunkSize = DefaultChunkSize
 	}
+	if opt.ChunkSize < 0 {
+		panic("chunk size cannot be negative")
+	}
+	if opt.ChunkSize > MaxChunkSize {
+		return nil, ErrChunkSizeTooLarge
+	}
 	if opt.RandomReader == nil {
 		opt.RandomReader = rand.Reader
 	}
@@ -35,9 +41,10 @@ func Seal(out io.Writer, key *Key, outerPrefix []byte, opt SealOptions) (*Writer
 	// after this call, plaintext key is no longer on the stack (just in case)
 	encapsulate(key.Key[:], encapsulated[:])
 
-	prefix := make([]byte, 0, len(outerPrefix)+envelopeHeaderSize)
+	prefix := make([]byte, 0, len(outerPrefix)+headerSize)
 	prefix = append(prefix, outerPrefix...)
-	prefix = binary.LittleEndian.AppendUint32(prefix, opt.ChunkSize)
+	prefix = binary.LittleEndian.AppendUint32(prefix, 0)
+	prefix = binary.LittleEndian.AppendUint32(prefix, uint32(opt.ChunkSize))
 	prefix = append(prefix, key.ID[:]...)
 	prefix = append(prefix, encapsulated[:]...)
 
